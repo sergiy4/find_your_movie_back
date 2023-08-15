@@ -11,14 +11,17 @@ const collectionSchema = new Schema({
     },
     films:[
         {
-            id:{
-                type:String,
+            tmdb_id:{
+                type:Number,
                 required:true,
                 unique:true
             },
             name:{
                 type:String,
                 required:true,
+            },
+            isMovie:{
+                type:Boolean
             }
         }
     ],
@@ -26,6 +29,10 @@ const collectionSchema = new Schema({
         type:Schema.Types.ObjectId,
         ref:'User',
         required:true
+    },
+    private:{
+        type:Boolean,
+        require:true
     }
 })
 

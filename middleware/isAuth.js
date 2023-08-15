@@ -1,19 +1,16 @@
 import passport from "passport";
 
-function isAuth(req,res,next){
-    const authorizeMiddleware = passport.authenticate('jwt', {session:false}, (err, user, info)=>{
+
+
+function isAuth(req, res, next) {
+    passport.authenticate('jwt', { session: false }, (err, user) => {
         if (err || !user) {
-            // Помилка або невірний токен, ви можете повернути помилку або виконати інші дії
             return res.status(401).json({ message: 'invalid token' });
         }
 
-         // if the authentication is successful, add the user to the request object
-        req.user = user;
-
-        next()
-    })
-
-    authorizeMiddleware(req, res, next);
+        req.user = user; // Додати користувача до об'єкта запиту
+        next();
+    })(req, res, next); // Виклик middleware
 }
 
 export default isAuth

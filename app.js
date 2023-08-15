@@ -10,6 +10,8 @@ import 'dotenv/config'
 
 import authRouter from './routes/authRouter.js';
 import movieRouter from './routes/movieRouter.js';
+import collectionRouter from './routes/collectionRouter.js';
+import isAuth from './middleware/isAuth.js';
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -51,7 +53,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ROUTES
 app.use('/auth',authRouter)
 app.use('/movie',movieRouter)
-
+app.use('/collection' ,isAuth, collectionRouter)
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

@@ -86,6 +86,7 @@ const logIn = [
            const tokenObject = issueJWT(user)
 
            res.status(200).json({success:true, token:tokenObject.token, expires: tokenObject.expires})
+
         } else {
             res.status(401).json({success:false, msg:'could not find user'})
         }

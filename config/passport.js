@@ -27,7 +27,6 @@ const options = {
 const strategy = new jwtStrategy(options, async(payload, done)=>{
 
     try{
-        
         const user = await User.findOne({_id: payload.sub})
 
         if(user){
@@ -41,7 +40,7 @@ const strategy = new jwtStrategy(options, async(payload, done)=>{
 });
 
 const configPassport = (passport) =>{
-    passport.use(strategy)
+    passport.use('jwt',strategy)
 }
 
 export default configPassport

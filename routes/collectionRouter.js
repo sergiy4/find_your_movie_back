@@ -1,17 +1,28 @@
 import express from 'express'
+import collectionController from '../controllers/collectionController.js'
 const collectionRouter = express.Router()
 
-collectionRouter.route('/:userId/collection')
-// get all user collection
-.get()
+collectionRouter.route('/')
+// get all user collections
+.get(collectionController.getAllCurrentUserCollection)
 // create user collection
-.post()
+.post(collectionController.addNewCollection)
 
-collectionRouter.route('/:userId/collection/:id')
+collectionRouter.route('/:collectionID')
 // get current collection
-.get()
+.get(collectionController.getCurrentCollection)
+
 // update current collection
-.patch()
+.patch(collectionController.updateCurrentCollection)
+
 // delete current collection
 .delete()
 
+collectionRouter.route('/:collectionID/movie')
+// add new movie or tv in collection
+.post(collectionController.addMovieToCollection)
+
+// delete movie or tv in collection
+.delete(collectionController.deleteMovieFromCollection)
+
+export default collectionRouter
