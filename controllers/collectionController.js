@@ -28,7 +28,6 @@ const createNewCollection = [
         .escape(),
     expressAsyncHandler(async(req, res, next)=>{
 
-        console.log('here')
         // Authorize user
         const authorizeUserID = req.user._id;
     
@@ -44,7 +43,7 @@ const createNewCollection = [
             name: req.body.name,
             private: req.body.private
         })
-        // console.log(newCollection)
+       
         // save
         const collection = await newCollection.save()
         console.log(collection)
@@ -65,7 +64,9 @@ const getCurrentCollection = expressAsyncHandler(async(req,res, next)=>{
 
         if(ownerCollection.equals(authorizeUserID)){
 
-            res.status(200).json(currentCollection)
+            const allMovieCurrentCollection = await Movie.find({collectionsID:{$in:[collectionID]}})
+
+            res.status(200).json({currentCollection,allMovieCurrentCollection})
             return;
         } else {
             res.status(401).json({message:"You cannot view this collection because it is private"})
@@ -73,7 +74,8 @@ const getCurrentCollection = expressAsyncHandler(async(req,res, next)=>{
         }
 
     } else {
-        res.status(200).json(currentCollection)
+        const allMovieCurrentCollection = await Movie.find({collectionsID:{$in:[collectionID]}})
+        res.status(200).json({currentCollection,allMovieCurrentCollection})
         return;
     }
 })
@@ -104,12 +106,13 @@ const updateCurrentCollection = [
         const authorizeUserID = req.user._id;
     
         const collection = await Collection.findById(collectionID);
-        const ownerCollection = collection.userID
+        
     
         if (!collection) {
           return res.status(404).json({ message: 'Collection not found' });
         }
         
+        const ownerCollection = collection.userID
         // Check user
         if (!ownerCollection.equals(authorizeUserID)) {
           return res.status(401).json({message:"You cannot update other people's collections"});
@@ -133,6 +136,7 @@ const deleteCollection = expressAsyncHandler(async(req,res,next)=>{
 
     const collection = await Collection.findById(collectionID);
 
+    console.log(collection)
     if (!collection) {
       return res.status(404).json({ message: 'Collection not found' });
     }

@@ -5,50 +5,29 @@ import Collection from "../models/Collection.js";
 import User from '../models/User.js'
 import Movie from "../models/Movie.js";
 
-const findMovie = [
-    body('description').escape(),
-    expressAsyncHandler(async(req,res,next)=>{
 
-        // here the data from the input is sent
-        // req.body.description
-        const description = req.body.description
-        const isMovie =JSON.parse( req.body.isMovie);
+const getCurrentMovie = expressAsyncHandler(async(req, res, next)=>{
+    const { movieID } = req.params
 
-        if(!description && isMovie === undefined){
+    const movie = await Movie.findById(movieID);
 
-            res.status(400).json('Empty input')
-        }
-       
-        // if isMovie we search movie
-        if(isMovie){
-            console.log('here')
-            const dataMovie = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${process.env.TMDB_API_KEY}&query=dexter&language=en-US&page=1`)
-            const film = await dataMovie.json()
-            const id = film.results[0].id
-    
-    
-            // get movie details
-            const filmDetails = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${process.env.TMDB_API_KEY}`)
-            const data = await filmDetails.json();
+    if(!movie){
+        res.status(404).json({message:"Movie not found"});
+    }
 
-            res.status(200).json(data)
+    if(movie.isMovie){
+        const movieDetails = await fetch(`https://api.themoviedb.org/3/movie/${movie._id}?api_key=${process.env.TMDB_API_KEY}`)
+        const data = await movieDetails.json();
 
-            // else search tv
-        } else {
-            console.log('here2')
-            const dataMovie = await fetch(`https://api.themoviedb.org/3/search/tv?api_key=${process.env.TMDB_API_KEY}&query=dexter&language=en-US&page=1`)
-            const film = await dataMovie.json()
-            const id = film.results[0].id
-    
-    
-            // get movie details
-            const filmDetails = await fetch(`https://api.themoviedb.org/3/tv/${id}?api_key=${process.env.TMDB_API_KEY}`)
-            const data = await filmDetails.json();
+        res.status(200).json(data)
+    } else {
+        const tvDetails = await fetch(`https://api.themoviedb.org/3/tv/${id}?api_key=${process.env.TMDB_API_KEY}`)
+        const data = await tvDetails.json();
+        res.status(200).json(data)
+    }
 
-            res.status(200).json(data)
-        }
-    })
-]
+
+})
 
 // "name":"dickssdfs Movie",
 // "isMovie":true,
@@ -164,7 +143,7 @@ const deleteMovieFromCollection = [
 ]
 
 export default {
-    findMovie,
     addMovieToCollection,
-    deleteMovieFromCollection
+    deleteMovieFromCollection,
+    getCurrentMovie
 }
