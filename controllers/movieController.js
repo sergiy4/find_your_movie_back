@@ -56,10 +56,10 @@ const addMovieToCollection = [
             res.status(400).json({ message: "Invalid input" });
             return;
         }
-
+        
         // an array of ids of collections that have not yet been added
         const { name, tmdb_id, isMovie, collectionsID } = req.body;
-        // const authorizeUserID = req.user._id;
+
 
         // let's check if our movie exists
         const existingMovie = await Movie.findOne({ tmdb_id ,isMovie })
@@ -92,7 +92,6 @@ const addMovieToCollection = [
                 res.status(200).json(savedNewMovie)
                 return;
             }
-
         }
         res.status(500).json({message:'the movie is not saved'})
 
@@ -123,17 +122,25 @@ const deleteMovieFromCollection = [
         const errors = validationResult(req);
 
         if(!errors.isEmpty()){
-            
+            console.log(errors)
             res.status(400).json({ message: "Invalid input" });
             return;
         }
-        
-        const { tmdb_id, isMovie,  collectionID } = req.body;
-        
 
-        await Movie.updateOne({ tmdb_id,isMovie },{ $pull :{collectionsID:collectionID}});
+        const { tmdb_id, isMovie,  } = req.body;
+        const {deletedCollectionID} = req.body
+        
+      
+
+        if(deletedCollectionID === undefined){
+            res.status(400).json({message:'Bad Request'})
+            return;
+        }
+
+        await Movie.updateOne({ tmdb_id,isMovie },{ $pull :{collectionsID:deletedCollectionID}});
         const updatedMovie = await Movie.findOne({tmdb_id, isMovie}).exec()
 
+        console.log(updatedMovie)
         // if the movie does not belong to any collection, delete it
         if(!updatedMovie.collectionsID.length){
             await Movie.findByIdAndDelete(updatedMovie._id)
