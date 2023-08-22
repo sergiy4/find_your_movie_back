@@ -1,6 +1,10 @@
 import express from 'express'
 import collectionController from '../controllers/collectionController.js'
+import verifyJWT from '../middleware/verifyJWT.js'
+
 const collectionRouter = express.Router()
+
+collectionRouter.use(verifyJWT)
 
 collectionRouter.route('/')
 // get all user collections

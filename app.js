@@ -3,16 +3,15 @@ import express from 'express';
 import path from 'path';
 import logger from 'morgan';
 import { fileURLToPath } from 'url';
+import cookieParser from 'cookie-parser';
 
-import configPassport from './config/passport.js';
-import passport from 'passport';
 import 'dotenv/config'
 
 import authRouter from './routes/authRouter.js';
 import movieRouter from './routes/movieRouter.js';
 import collectionRouter from './routes/collectionRouter.js';
 import FYMRouter from './routes/FYMRouter.js';
-import isAuth from './middleware/isAuth.js';
+
 
 import cors from 'cors'
 import corsOptions from './config/corsOption.js';
@@ -47,12 +46,11 @@ main().catch((err) => console.log(err));
 
 app.use(cors(corsOptions))
 // (corsOptions)
-// passport 
-configPassport(passport)
-app.use(passport.initialize())
 
 // middleware
 app.use(logger('dev'));
+
+app.use(cookieParser())
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -61,7 +59,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/auth',authRouter)
 app.use('/FYM', FYMRouter)
 app.use('/movie',movieRouter)
-app.use('/collection' ,isAuth, collectionRouter)
+app.use('/collection' , collectionRouter)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
