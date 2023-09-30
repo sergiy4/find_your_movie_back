@@ -18,6 +18,10 @@ const movieSchema = new Schema({
         type:Number,
         required:true,
     },
+    poster_path:{
+        type:String,
+        required:true,
+    },
     collectionsID:[
         {
             type:Schema.Types.ObjectId,

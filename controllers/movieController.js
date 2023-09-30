@@ -7,21 +7,25 @@ import Movie from "../models/Movie.js";
 
 
 const getCurrentMovie = expressAsyncHandler(async(req, res, next)=>{
-    const { movieID } = req.params
+       console.log('MOVIE FUCK')
+    let { movieID } = req.params
+    // movieID = parseInt(movieID)
+ 
+    // console.log(movieID)
 
     const movie = await Movie.findById(movieID);
-
+    console.log(movie)
     if(!movie){
         res.status(404).json({message:"Movie not found"});
     }
 
     if(movie.isMovie){
-        const movieDetails = await fetch(`https://api.themoviedb.org/3/movie/${movie._id}?api_key=${process.env.TMDB_API_KEY}`)
+        const movieDetails = await fetch(`https://api.themoviedb.org/3/movie/${movie.tmdb_id}?api_key=${process.env.TMDB_API_KEY}`)
         const data = await movieDetails.json();
 
         res.status(200).json(data)
     } else {
-        const tvDetails = await fetch(`https://api.themoviedb.org/3/tv/${id}?api_key=${process.env.TMDB_API_KEY}`)
+        const tvDetails = await fetch(`https://api.themoviedb.org/3/tv/${movie.tmdb_id}?api_key=${process.env.TMDB_API_KEY}`)
         const data = await tvDetails.json();
         res.status(200).json(data)
     }
@@ -35,8 +39,8 @@ const getCurrentMovie = expressAsyncHandler(async(req, res, next)=>{
 // "collectionsID":["64db438045fb5f4d04c19654"]
 const addMovieToCollection = [
     body('name')
-        .matches(/^[a-zA-Z0-9 :.,!?#$%]+$/) 
-        .customSanitizer(value=>value.toLowerCase())
+        .matches(/^[a-zA-Z0-9 :.,!?#$%"''-]*$/) 
+        // .customSanitizer(value=>value?.toLowerCase())
         .escape(),
 
     body('isMovie')
@@ -48,8 +52,14 @@ const addMovieToCollection = [
         .matches(/^[0-9]+$/)
         .withMessage('Input must contain only digits'),
 
+    body('poster_path')
+        .escape(),
+
+
     expressAsyncHandler(async(req,res, next)=>{
+
         const errors = validationResult(req);
+        console.log(req.body)
 
         if(!errors.isEmpty()){
             console.log(errors)
@@ -58,13 +68,13 @@ const addMovieToCollection = [
         }
         
         // an array of ids of collections that have not yet been added
-        const { name, tmdb_id, isMovie, collectionsID } = req.body;
-
+        const { name, tmdb_id, isMovie, collectionsID, poster_path } = req.body;
 
         // let's check if our movie exists
         const existingMovie = await Movie.findOne({ tmdb_id ,isMovie })
 
         if(existingMovie){
+
 
             const uniqueElements = collectionsID.filter(element => !existingMovie.collectionsID.includes(element))
 
@@ -83,6 +93,7 @@ const addMovieToCollection = [
                 name,
                 tmdb_id,
                 isMovie,
+                poster_path,
                 collectionsID
             })
 
@@ -103,9 +114,10 @@ const addMovieToCollection = [
 // "isMovie":true,
 // "tmdb_id":122344,
 // "collectionID":"64df574e5717e5a099578e77"
+// "poster_path" :"dfdfsdfsd"
 const deleteMovieFromCollection = [
     body('name')
-        .matches(/^[a-zA-Z0-9 :.,!?#$%]+$/) 
+        .matches(/^[a-zA-Z0-9 :.,!?#$%-]+$/) 
         .escape(),
 
     body("isMovie")
@@ -129,23 +141,35 @@ const deleteMovieFromCollection = [
 
         const { tmdb_id, isMovie,  } = req.body;
         const {deletedCollectionID} = req.body
-        
-      
 
         if(deletedCollectionID === undefined){
             res.status(400).json({message:'Bad Request'})
             return;
         }
 
-        await Movie.updateOne({ tmdb_id,isMovie },{ $pull :{collectionsID:deletedCollectionID}});
-        const updatedMovie = await Movie.findOne({tmdb_id, isMovie}).exec()
-
-        console.log(updatedMovie)
+        const findMovie = await Movie.findOne({ tmdb_id, isMovie })
+       
         // if the movie does not belong to any collection, delete it
-        if(!updatedMovie.collectionsID.length){
-            await Movie.findByIdAndDelete(updatedMovie._id)
-        } 
-        res.status(200).json({message:'successfully deleted'})
+        if(!findMovie){
+            res.status(400).json('Dont exist')
+        }
+
+        if(findMovie.collectionsID.includes(deletedCollectionID)){
+
+            findMovie.collectionsID = findMovie.collectionsID.filter(item =>!item.equals(deletedCollectionID))
+
+            if(!findMovie.collectionsID.length){
+                
+                await Movie.findByIdAndDelete(findMovie._id)
+                res.status(200).json({message:'Movie deleted'})
+                return;
+            }
+
+            const savedMovie = await findMovie.save()
+            res.status(200).json(savedMovie)
+            return;
+        }
+        res.status(400).json({message:'the movie is not in this collection'})
     })
 ]
 

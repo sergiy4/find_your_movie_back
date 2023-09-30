@@ -5,7 +5,7 @@ const authRouter = express.Router()
 
 
 authRouter.post('/register', authController.register)
-authRouter.post('/refresh', authController.refresh)
+authRouter.get('/refresh', authController.refresh)
 authRouter.post('/login',authController.login)
 authRouter.post('/logout', authController.logOut)
 

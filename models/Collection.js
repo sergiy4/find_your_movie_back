@@ -14,7 +14,7 @@ const collectionSchema = new Schema({
         minLength:1,
         maxLength:100
     },
-    private:{
+    isPrivate:{
         type:Boolean,
         require:true
     }

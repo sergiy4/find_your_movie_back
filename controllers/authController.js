@@ -60,30 +60,34 @@ const login = [
      .escape(),
 
    // validation password
-    body('password','invalidPassword')
+    body('password','Invalid password')
      .trim()
      .isLength({min:3, max:40})
      .escape()
      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/),
 
     expressAsyncHandler(async(req, res, next)=>{
+        console.log(req.body)
         // get errors
         const errors = validationResult(req);
 
         if(!errors.isEmpty()){
             // if there are errors, I send them to the client
-            res.status(400).json({message:'Bad request .Invalid input' })
+ 
+            res.status(400).json({message:`${errors.array()[0].msg}` })
+            return;
         } 
 
         const user = await User.findOne({username: req.body.username}).exec()
         if(!user){
             res.status(401).json({success:false, msg:'could not find user'})
+            return;
         }
 
         const isValid = await validPassword(req.body.password, user.hash)
         if(!isValid){
            res.status(401).json({success:false, msg:'could not find user'})
-
+            return;
         } 
 
         const accessToken = jsonwebtoken.sign(
@@ -91,7 +95,7 @@ const login = [
                 sub: user._id
             },
             process.env.ACCESS_TOKEN,
-            { expiresIn:'20s' }
+            { expiresIn:'15m' }
         )
         
         const refreshToken = jsonwebtoken.sign(
@@ -99,7 +103,7 @@ const login = [
                 sub: user._id
             },
             process.env.REFRESH_TOKEN,
-            { expiresIn:'1d' }
+            { expiresIn:'7d' }
         )
 
         res.cookie('jwt', refreshToken, {
@@ -109,15 +113,15 @@ const login = [
             maxAge: 7 * 24 * 60 * 60 * 1000
         })
 
-        res.json({accessToken})
+        res.json({accessToken, userID:user._id})
     })
 ]
 
 const refresh = expressAsyncHandler(async(req, res, next)=>{
+    console.log('Refresh')
     const cookies = req.cookies
-
     console.log(cookies)
-    console.log(req.cookies.jwt)
+
     if(!cookies?.jwt){
         return res.status(401).json({message:'Unauthorized'})
     }
@@ -133,7 +137,8 @@ const refresh = expressAsyncHandler(async(req, res, next)=>{
                 return;
             }
             const foundUser = await User.findById(decoded.sub)
-
+            
+            console.log(decoded.sub)
             if(!foundUser){
                 res.status(401).json({message:'Unauthorize'})
                 return;
@@ -144,10 +149,10 @@ const refresh = expressAsyncHandler(async(req, res, next)=>{
                     sub: foundUser._id
                 },
                 process.env.ACCESS_TOKEN,
-                { expiresIn:'10s' }
+                { expiresIn:'15m' }
             )
 
-            res.json({accessToken})
+            res.json({accessToken, userID:foundUser._id})
         }
     
     )

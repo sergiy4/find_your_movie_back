@@ -4,7 +4,7 @@ import FYMController from "../controllers/FYMController.js";
 const FYMRouter = express.Router()
 
 FYMRouter.route('/')
-.get(FYMController.findMovie)
+.post(FYMController.findMovie)
 
 
 export default FYMRouter
