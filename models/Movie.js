@@ -18,9 +18,9 @@ const movieSchema = new Schema({
         type:Number,
         required:true,
     },
-    poster_path:{
+    backdrop_path:{
         type:String,
-        required:true,
+        // required:true,
     },
     collectionsID:[
         {
@@ -32,5 +32,6 @@ const movieSchema = new Schema({
 })
 
 const Movie = mongoose.model('Movie',movieSchema)
+
 
 export default Movie
