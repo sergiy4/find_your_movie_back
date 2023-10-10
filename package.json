@@ -22,6 +22,7 @@
     "jsonwebtoken": "^9.0.1",
     "mongoose": "^7.4.3",
     "morgan": "~1.9.1",
-    "node-fetch": "^2.6.12"
+    "node-fetch": "^2.6.12",
+    "openai": "^4.11.1"
   }
 }
