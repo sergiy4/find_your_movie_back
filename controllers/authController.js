@@ -12,21 +12,26 @@ const register = [
         .escape(),
 
     // validation password
-    body("password", "invalidPassword")
+    body("password", "invalid Password")
         .trim()
         .isLength({ min: 3, max: 40 })
         .escape()
-        .matches(
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/
-        ),
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).*$/),
 
     expressAsyncHandler(async (req, res, next) => {
         // get errors
         const errors = validationResult(req);
 
         if (!errors.isEmpty()) {
+            console.log(errors);
             // if there are errors, I send them to the client
-            res.status(400).json(`Bad request .Invalid input`);
+            const errorStr = errors
+                .array()
+                .map((item) => item.msg)
+                .join(" . ");
+
+            console.log(errorStr);
+            res.status(400).json({ message: `${errorStr}` });
             return;
         }
         // If there are no errors, we save the user and send it to the client

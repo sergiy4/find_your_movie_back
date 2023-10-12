@@ -29,11 +29,16 @@ const findMovie = [
 
         console.log(chatResponse.choices[0].message.content);
         const chatAnswer = JSON.parse(chatResponse.choices[0].message.content);
-        const sanitizeName = sanitizeString(chatAnswer.movie_title);
+
+        const sanitizeMovieTitle = sanitizeString(chatAnswer.movie_title);
+        const sanitizeOriginalTitle = sanitizeString(chatAnswer.original_title);
 
         // format in order to insert into the url
-        const nameParams = new URLSearchParams();
-        nameParams.set("query", sanitizeName);
+        const originalNameParams = new URLSearchParams();
+        originalNameParams.set("query", sanitizeOriginalTitle);
+
+        const movieTitleParams = new URLSearchParams();
+        movieTitleParams.set("query", sanitizeMovieTitle);
 
         if (chatAnswer?.isMovie === undefined) {
             res.status(400).json({
@@ -44,28 +49,43 @@ const findMovie = [
 
         if (chatAnswer?.isMovie) {
             console.log(chatAnswer?.release_year);
-            const dataMovie = await fetch(
+            let dataMovie = await fetch(
                 `https://api.themoviedb.org/3/search/movie?api_key=${
                     process.env.TMDB_API_KEY
-                }&${nameParams.toString()}&page=1&primary_release_year=${String(
+                }&${originalNameParams.toString()}&page=1&primary_release_year=${String(
                     chatAnswer?.release_year
-                )}`
+                )}&region=${chatAnswer?.region}`
             );
 
+            console.log(originalNameParams);
             // get movie id
-            const film = await dataMovie.json();
+            let film = await dataMovie.json();
 
+            // if the film is not found by the original title, search by English
+            if (film.results.length === 0) {
+                console.log("here");
+                dataMovie = await fetch(
+                    `https://api.themoviedb.org/3/search/movie?api_key=${
+                        process.env.TMDB_API_KEY
+                    }&${movieTitleParams.toString()}&page=1&primary_release_year=${String(
+                        chatAnswer?.release_year
+                    )}&region=${chatAnswer?.region}`
+                );
+
+                film = await dataMovie.json();
+            }
+
+            // git movie id
             const id = film?.results?.[0]?.id;
 
             if (!id) {
                 res.status(400).json({
-                    message: "Sorry , movie not found :( \n Pleas try again",
+                    message: "Sorry , movie not found :( \n Pleas try again.",
                 });
                 return;
             }
 
             // get movie details
-
             const filmDetails = await fetch(
                 `https://api.themoviedb.org/3/movie/${id}?api_key=${process.env.TMDB_API_KEY}`
             );
@@ -74,12 +94,22 @@ const findMovie = [
             res.status(200).json(data);
         } else {
             // else search tv
-            const dataSeries = await fetch(
+            let dataSeries = await fetch(
                 `https://api.themoviedb.org/3/search/tv?api_key=${
                     process.env.TMDB_API_KEY
-                }&${nameParams.toString()}&language=en-US&page=1`
+                }&${originalNameParams.toString()}&page=1`
             );
-            const Series = await dataSeries.json();
+            let Series = await dataSeries.json();
+
+            if (Series.results.length === 0) {
+                dataSeries = await fetch(
+                    `https://api.themoviedb.org/3/search/tv?api_key=${
+                        process.env.TMDB_API_KEY
+                    }&${movieTitleParams.toString()}&page=1`
+                );
+                Series = await dataSeries.json();
+            }
+
             const id = Series.results[0]?.id;
 
             if (!id) {

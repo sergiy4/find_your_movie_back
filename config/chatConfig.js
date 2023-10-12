@@ -9,12 +9,12 @@ export default function getChatConfig(description) {
             },
             {
                 role: "user",
-                content: `Here is the description :"""${description}"""`,
+                content: ` Description of the movie I want:"""${description}"""`,
             },
         ],
         model: "gpt-3.5-turbo-16k-0613",
-        frequency_penalty: 1,
-        temperature: 0.8,
-        max_tokens: 40,
+        frequency_penalty: 1.5,
+        temperature: 1,
+        max_tokens: 100,
     };
 }
