@@ -1,79 +1,61 @@
-import createError from "http-errors";
-import express from "express";
-import path from "path";
-import logger from "morgan";
-import { fileURLToPath } from "url";
-import cookieParser from "cookie-parser";
+import createError from 'http-errors';
+import express from 'express';
+import path from 'path';
+import logger from 'morgan';
+import { fileURLToPath } from 'url';
+import cookieParser from 'cookie-parser';
+import 'dotenv/config';
+import errorHandler from './middleware/errorHandler.js';
 
-import "dotenv/config";
+import connectDB from './config/dbConfig.js';
+import mongoose from 'mongoose';
 
-import authRouter from "./routes/authRouter.js";
-import movieRouter from "./routes/movieRouter.js";
-import collectionRouter from "./routes/collectionRouter.js";
-import FYMRouter from "./routes/FYMRouter.js";
+import cors from 'cors';
+import corsOptions from './config/corsOption.js';
 
-import cors from "cors";
-import corsOptions from "./config/corsOption.js";
+import authRouter from './routes/authRouter.js';
+import collectionRouter from './routes/collectionRouter.js';
+import FYMRouter from './routes/FYMRouter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-
+const PORT = process.env.PORT;
 //-----------------MONGOOSE CONNECT----------
 
-import mongoose from "mongoose";
-// Строгий режим забороняє вставляти документи , які не відповідються
-// схемі
-mongoose.set("strictQuery", false);
-
-const dbOptions = {
-    useUnifiedTopology: true,
-    useNewUrlParser: true,
-};
-
-async function main() {
-    await mongoose.connect(process.env.MONGO, dbOptions);
-    console.log("Connect to MongoDB");
-}
-
-// Wait for database to connect, logging an error if there is a problem
-main().catch((err) => console.log(err));
-//
+// connect to MongoDB
+connectDB();
 
 app.use(cors(corsOptions));
-// corsOptions
-// corsOptions
-// (corsOptions)
 
 // middleware
-app.use(logger("dev"));
+app.use(logger('dev'));
 
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, "public")));
 
 // ROUTES
-app.use("/auth", authRouter);
-app.use("/FYM", FYMRouter);
-app.use("/movie", movieRouter);
-app.use("/collection", collectionRouter);
+app.use('/auth', authRouter);
+app.use('/FYM', FYMRouter);
+app.use('/collections', collectionRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-    next(createError(404));
+  next(createError(404));
 });
 
 // error handler
-app.use(function (err, req, res, next) {
-    console.log(req.path);
-    console.log(err.message);
-    // set locals, only providing error in development
-    res.locals.message = err.message;
-    // res.locals.error = req.app.get('env') === 'development' ? err : {};
+app.use(errorHandler);
 
-    res.status(err.status || 500).json({ message: err.message });
+mongoose.connection.once('open', () => {
+  console.log('connected to MongoDB');
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 });
 
-export default app;
+mongoose.connection.on('error', (err) => {
+  console.log(err);
+});

@@ -1,6 +1,6 @@
-import express from "express";
-import collectionController from "../controllers/collectionController.js";
-import verifyJWT from "../middleware/verifyJWT.js";
+import express from 'express';
+import collectionController from '../controllers/collectionController.js';
+import verifyJWT from '../middleware/verifyJWT.js';
 
 const collectionRouter = express.Router();
 
@@ -8,43 +8,23 @@ const collectionRouter = express.Router();
 collectionRouter.use(verifyJWT);
 
 collectionRouter
-    .route("/:collectionID/page/:page/movieName/:movieName?")
-    .get(collectionController.getCurrentCollection);
+  .route('/')
+  .get(collectionController.getAllCurrentUserCollections)
+  .post(collectionController.createNewCollection);
 
 collectionRouter
-    .route("/page/:page/findCollections/:inputValue?")
-    .get(collectionController.searchCurrentUserCollectionPagination);
-// .get(collectionController.)
+  .route('/:collectionID')
+  .get(collectionController.getCurrentCollection)
+  .patch(collectionController.updateCurrentCollection)
+  .delete(collectionController.deleteCollection);
 
 collectionRouter
-    .route("/page/:page/findRandomCollections/:inputValue?")
-    .get(collectionController.searchRandomCollectionPagination);
-
-// collectionRouter.route('/page/:page')
-// .get(collectionController.getCurrentUserCollectionPagination)
+  .route('/:collectionID/movies')
+  .post(collectionController.addMovieToCollection);
 
 collectionRouter
-    .route("/randomCollections")
-    // get random private collections
-    .get(collectionController.getRandomCollections);
-
-collectionRouter
-    .route("/")
-    // get all user collections
-    .get(collectionController.getAllCurrentUserCollection)
-
-    // create user collection
-    .post(collectionController.createNewCollection);
-
-collectionRouter
-    .route("/:collectionID")
-    // get current collection
-    .get(collectionController.getCurrentCollection)
-
-    // update current collection
-    .patch(collectionController.updateCurrentCollection)
-
-    // delete current collection
-    .delete(collectionController.deleteCollection);
+  .route('/:collectionID/movies/:movieID')
+  .delete(collectionController.deleteMovieFromCollection)
+  .get(collectionController.getMovie);
 
 export default collectionRouter;
