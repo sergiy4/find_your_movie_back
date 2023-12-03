@@ -1,11 +1,11 @@
-import expressAsyncHandler from "express-async-handler";
-import { body, validationResult } from "express-validator";
-import Collection from "../models/Collection.js";
-import mongoose from "mongoose";
+import expressAsyncHandler from 'express-async-handler';
+import { body, validationResult } from 'express-validator';
+import Collection from '../models/Collection.js';
+import mongoose from 'mongoose';
 
 const getCurrentUserCollections = expressAsyncHandler(
   async (req, res, next) => {
-    let { page = 1, pageSize = 12, search = "" } = req.query;
+    let { page = 1, pageSize = 12, search = '' } = req.query;
     if (page < 1) {
       page = 1;
     }
@@ -14,7 +14,7 @@ const getCurrentUserCollections = expressAsyncHandler(
 
     const filters = {};
     if (search) {
-      filters.name = { $regex: new RegExp(search, "i") };
+      filters.name = { $regex: new RegExp(search, 'i') };
     }
     if (authorizeUserID) {
       filters.userID = authorizeUserID;
@@ -25,14 +25,14 @@ const getCurrentUserCollections = expressAsyncHandler(
       .limit(pageSize);
 
     if (collections.length < 1) {
-      return res.status(400).json({ message: "Collection not found" });
+      return res.status(400).json({ message: 'Collection not found' });
     }
 
     const totalCollections = await Collection.find(filters).countDocuments();
     const totalCountPage = Math.ceil(totalCollections / pageSize);
 
     if (page > totalCountPage) {
-      return res.status(404).json({ message: "This page does not exist" });
+      return res.status(404).json({ message: 'This page does not exist' });
     }
 
     res.status(200).json({
@@ -43,7 +43,7 @@ const getCurrentUserCollections = expressAsyncHandler(
 );
 
 const getRandomCollections = expressAsyncHandler(async (req, res, next) => {
-  let { page = 1, pageSize = 12, search = "" } = req.query;
+  let { page = 1, pageSize = 12, search = '' } = req.query;
   if (page < 1) {
     page = 1;
   }
@@ -52,7 +52,7 @@ const getRandomCollections = expressAsyncHandler(async (req, res, next) => {
 
   const filters = {};
   if (search) {
-    filters.name = { $regex: new RegExp(search, "i") };
+    filters.name = { $regex: new RegExp(search, 'i') };
   }
   if (authorizeUserID) {
     filters.userID = { $ne: authorizeUserID };
@@ -62,15 +62,16 @@ const getRandomCollections = expressAsyncHandler(async (req, res, next) => {
     .skip((page - 1) * pageSize)
     .limit(pageSize);
 
+  console.log(collections);
   if (collections.length < 1) {
-    return res.status(400).json({ message: "Collection not found" });
+    return res.status(400).json({ message: 'Collection not found' });
   }
 
   const totalCollections = await Collection.find(filters).countDocuments();
   const totalCountPage = Math.ceil(totalCollections / pageSize);
 
   if (page > totalCountPage) {
-    return res.status(404).json({ message: "This page does not exist" });
+    return res.status(404).json({ message: 'This page does not exist' });
   }
 
   res.status(200).json({
@@ -88,7 +89,7 @@ const getAllCurrentUserCollection = expressAsyncHandler(
     }).exec();
 
     if (collections.length < 1) {
-      return res.status(400).json({ message: "Collection not found" });
+      return res.status(400).json({ message: 'Collection not found' });
     }
 
     res.status(200).json(collections);
@@ -96,21 +97,21 @@ const getAllCurrentUserCollection = expressAsyncHandler(
 );
 
 const createNewCollection = [
-  body("name")
+  body('name')
     .escape()
     .matches(/^[a-zA-Z0-9_\.]+$/),
-  body("isPrivate").escape(),
+  body('isPrivate').escape(),
   expressAsyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
 
     // Authorize user
-    const authorizeUserID = req.user._id;
+    const authorizeUserID = req.user;
 
     if (!errors.isEmpty()) {
       let errorString = errors
         .array()
         .map((item) => item.msg)
-        .join(", ");
+        .join(', ');
 
       return res.status(400).json({ message: `${errorString}` });
     }
@@ -127,7 +128,7 @@ const createNewCollection = [
     const savedCollection = await newCollection.save();
 
     if (!savedCollection) {
-      return res.status(400).json({ message: "Failed to create" });
+      return res.status(400).json({ message: 'Failed to create' });
     }
 
     res.status(200).json(savedCollection);
@@ -136,12 +137,12 @@ const createNewCollection = [
 
 const getCurrentCollection = expressAsyncHandler(async (req, res, next) => {
   const { collectionID } = req.params;
-  let { page = 1, pageSize = 12, movie = "" } = req.query;
+  let { page = 1, pageSize = 12, movie = '' } = req.query;
   if (page < 1) {
     page = 1;
   }
   const skip = (page - 1) * pageSize;
-  const regex = new RegExp(movie, "i");
+  const regex = new RegExp(movie, 'i');
 
   const ObjectId = mongoose.Types.ObjectId;
   const result = await Collection.aggregate([
@@ -155,11 +156,11 @@ const getCurrentCollection = expressAsyncHandler(async (req, res, next) => {
         userID: 1,
         movies: {
           $filter: {
-            input: "$movies",
-            as: "movie",
+            input: '$movies',
+            as: 'movie',
             cond: {
               $regexMatch: {
-                input: "$$movie.name",
+                input: '$$movie.name',
                 regex: regex,
               },
             },
@@ -169,37 +170,38 @@ const getCurrentCollection = expressAsyncHandler(async (req, res, next) => {
     },
     {
       $project: {
-        collectionName: "$name",
-        isPrivate: "$isPrivate",
-        userID: "$userID",
+        collectionName: '$name',
+        isPrivate: '$isPrivate',
+        userID: '$userID',
         movies: {
-          $slice: ["$movies", skip, pageSize * page],
+          $slice: ['$movies', skip, pageSize * page],
         },
         totalPageCount: {
           $ceil: {
-            $divide: [{ $size: "$movies" }, pageSize],
+            $divide: [{ $size: '$movies' }, pageSize],
           },
         },
       },
     },
   ]);
 
+  console.log('dfgdf');
   if (result.length === 0 || result[0].movies.length < 1) {
-    return res.status(200).json({ ...result[0], message: "Movie not found" });
+    return res.status(200).json({ ...result[0], message: 'Movie not found' });
   }
 
   res.status(200).json(result[0]);
 });
 
 const updateCurrentCollection = [
-  body("name")
+  body('name')
     .matches(/^[a-zA-Z0-9_\.]+$/)
     .trim()
     .escape(),
 
-  body("isPrivate")
+  body('isPrivate')
     .isBoolean()
-    .withMessage("Your message if not boolean")
+    .withMessage('Your message if not boolean')
     .escape(),
 
   expressAsyncHandler(async (req, res, next) => {
@@ -207,7 +209,7 @@ const updateCurrentCollection = [
 
     if (!errors.isEmpty()) {
       console.log(errors.array());
-      res.status(400).json({ message: "Invalid input" });
+      res.status(400).json({ message: 'Invalid input' });
       return;
     }
 
@@ -219,7 +221,7 @@ const updateCurrentCollection = [
     const collection = await Collection.findById(collectionID);
 
     if (!collection) {
-      return res.status(404).json({ message: "Collection not found" });
+      return res.status(404).json({ message: 'Collection not found' });
     }
 
     const ownerCollection = collection.userID;
@@ -244,7 +246,7 @@ const deleteCollection = expressAsyncHandler(async (req, res, next) => {
 
   const collection = await Collection.findById(collectionID).lean().exec();
   if (!collection) {
-    return res.status(404).json({ message: "Collection not found" });
+    return res.status(404).json({ message: 'Collection not found' });
   }
 
   const ownerCollection = collection.userID;
@@ -256,37 +258,37 @@ const deleteCollection = expressAsyncHandler(async (req, res, next) => {
   // delete collection
   await Collection.findByIdAndDelete(collectionID);
 
-  res.status(200).json({ message: "successfully deleted" });
+  res.status(200).json({ message: 'successfully deleted' });
 });
 
 const addMovieToCollection = [
-  body("name")
+  body('name')
     .trim()
-    .matches(/^[a-zA-Z0-9_\.]+$/)
+    // .matches(/^[a-zA-Z0-9_\.]+$/)
     .escape(),
 
-  body("isMovie")
+  body('isMovie')
     .isBoolean()
-    .withMessage("Your message if not boolean")
+    .withMessage('Your message if not boolean')
     .escape(),
 
   // body('tmdb_id')
   //   .matches(/^[0-9]+$/)
   //   .withMessage('Input must contain only digits'),
 
-  body("backdrop_path").escape(),
+  body('backdrop_path').escape(),
   expressAsyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
 
     // Authorize user
     const authorizeUserID = req.user;
-    console.log("addMovieToCollection");
+    console.log('addMovieToCollection');
 
     if (!errors.isEmpty()) {
       let errorString = errors
         .array()
         .map((item) => item.msg)
-        .join(", ");
+        .join(', ');
 
       return res.status(400).json({ message: `${errorString}` });
     }
@@ -296,7 +298,7 @@ const addMovieToCollection = [
     if (!Array.isArray(collectionIDs)) {
       return res
         .status(400)
-        .json({ message: "collectionIDs must be an array" });
+        .json({ message: 'collectionIDs must be an array' });
     }
 
     const result = await Collection.updateMany(
@@ -326,10 +328,10 @@ const addMovieToCollection = [
 
     console.log(result.modifiedCount);
     if (result.modifiedCount > 0) {
-      return res.status(200).json({ message: "Movies added to collections" });
+      return res.status(200).json({ message: 'Movies added to collections' });
     } else {
       return res.status(403).json({
-        message: "Failed to add movies to collections or movies already exist",
+        message: 'Failed to add movies to collections or movies already exist',
       });
     }
   }),
@@ -346,10 +348,10 @@ const deleteMovieFromCollection = expressAsyncHandler(
     if (result.modifiedCount === 0) {
       return res
         .status(404)
-        .json({ message: "The movie has not been deleted or does not exist" });
+        .json({ message: 'The movie has not been deleted or does not exist' });
     }
 
-    res.json({ message: "Movie was deleted" });
+    res.json({ message: 'Movie was deleted' });
   }
 );
 
@@ -361,21 +363,21 @@ const getMovie = expressAsyncHandler(async (req, res, next) => {
       $match: { _id: new mongoose.Types.ObjectId(collectionID) },
     },
     {
-      $unwind: "$movies",
+      $unwind: '$movies',
     },
     {
-      $match: { "movies._id": new mongoose.Types.ObjectId(movieID) },
+      $match: { 'movies._id': new mongoose.Types.ObjectId(movieID) },
     },
     {
       $project: {
         _id: 0,
-        movie: "$movies",
+        movie: '$movies',
       },
     },
   ]);
 
   if (result.length === 0 || !result[0].movie) {
-    return res.status(404).json({ message: "Movie not found" });
+    return res.status(404).json({ message: 'Movie not found' });
   }
 
   if (result[0].movie.isMovie) {

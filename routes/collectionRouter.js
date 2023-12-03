@@ -21,7 +21,7 @@ collectionRouter
 
 collectionRouter
   .route('/randomCollections')
-  .post(collectionController.getRandomCollections);
+  .get(collectionController.getRandomCollections);
 
 collectionRouter
   .route('/:collectionID')

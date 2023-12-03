@@ -128,7 +128,7 @@ const login = [
       sameSite: 'none',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-    res.json({ accessToken, userID: user._id });
+    res.json({ accessToken });
   }),
 ];
 
@@ -169,7 +169,7 @@ const refresh = expressAsyncHandler(async (req, res, next) => {
         { expiresIn: '15m' }
       );
 
-      res.json({ accessToken, userID: foundUser._id });
+      res.json({ accessToken });
     }
   );
 });
