@@ -185,9 +185,8 @@ const getCurrentCollection = expressAsyncHandler(async (req, res, next) => {
     },
   ]);
 
-  console.log('dfgdf');
   if (result.length === 0 || result[0].movies.length < 1) {
-    return res.status(200).json({ ...result[0], message: 'Movie not found' });
+    return res.status(404).json({ ...result[0], message: 'Movie not found' });
   }
 
   res.status(200).json(result[0]);
@@ -262,19 +261,12 @@ const deleteCollection = expressAsyncHandler(async (req, res, next) => {
 });
 
 const addMovieToCollection = [
-  body('name')
-    .trim()
-    // .matches(/^[a-zA-Z0-9_\.]+$/)
-    .escape(),
+  body('name').trim().escape(),
 
   body('isMovie')
     .isBoolean()
     .withMessage('Your message if not boolean')
     .escape(),
-
-  // body('tmdb_id')
-  //   .matches(/^[0-9]+$/)
-  //   .withMessage('Input must contain only digits'),
 
   body('backdrop_path').escape(),
   expressAsyncHandler(async (req, res, next) => {
@@ -282,7 +274,6 @@ const addMovieToCollection = [
 
     // Authorize user
     const authorizeUserID = req.user;
-    console.log('addMovieToCollection');
 
     if (!errors.isEmpty()) {
       let errorString = errors
@@ -293,7 +284,6 @@ const addMovieToCollection = [
       return res.status(400).json({ message: `${errorString}` });
     }
     const { name, tmdb_id, isMovie, backdrop_path, collectionIDs } = req.body;
-    console.log({ name, tmdb_id, isMovie, backdrop_path, collectionIDs });
 
     if (!Array.isArray(collectionIDs)) {
       return res
@@ -325,8 +315,6 @@ const addMovieToCollection = [
         },
       }
     );
-
-    console.log(result.modifiedCount);
     if (result.modifiedCount > 0) {
       return res.status(200).json({ message: 'Movies added to collections' });
     } else {
@@ -345,13 +333,14 @@ const deleteMovieFromCollection = expressAsyncHandler(
       { _id: collectionID },
       { $pull: { movies: { _id: movieID } } }
     );
+
     if (result.modifiedCount === 0) {
       return res
         .status(404)
         .json({ message: 'The movie has not been deleted or does not exist' });
     }
 
-    res.json({ message: 'Movie was deleted' });
+    res.status(200).json({ message: 'Movie was deleted' });
   }
 );
 

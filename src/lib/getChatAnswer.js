@@ -1,4 +1,4 @@
-import getChatConfig from '../config/chatConfig.js';
+import getChatConfig from '../../config/chatConfig.js';
 
 async function getChatAnswer(description, openai) {
   const chatResponse = await openai.chat.completions.create(

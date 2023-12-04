@@ -2,3 +2,5 @@ node_modules
 .prettierignore
 .vscode
 .env
+/coverage.data
+/coverage/

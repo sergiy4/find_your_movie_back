@@ -1,7 +1,6 @@
 import express from 'express';
 import collectionController from '../controllers/collectionController.js';
 import verifyJWT from '../middleware/verifyJWT.js';
-
 const collectionRouter = express.Router();
 
 collectionRouter.use(verifyJWT);
@@ -16,12 +15,12 @@ collectionRouter
   .get(collectionController.getAllCurrentUserCollection);
 
 collectionRouter
-  .route('/movies')
-  .post(collectionController.addMovieToCollection);
-
-collectionRouter
   .route('/randomCollections')
   .get(collectionController.getRandomCollections);
+
+collectionRouter
+  .route('/movies')
+  .post(collectionController.addMovieToCollection);
 
 collectionRouter
   .route('/:collectionID')
