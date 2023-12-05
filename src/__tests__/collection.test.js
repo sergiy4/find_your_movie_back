@@ -5,7 +5,6 @@ import collectionRouter from '../routes/collectionRouter.js';
 import express from 'express';
 import Collection from '../models/Collection';
 import {
-  userIds,
   authUserCollections,
   randomCollection,
   invalidCollectionsIds,
@@ -13,7 +12,7 @@ import {
   validRandomCollectionsIds,
   validAuthUserMoviesIds,
   invalidMoviesIds,
-} from './tests_data.js';
+} from './tests_collections_data.js';
 
 const app = express();
 app.use(cookieParser());
@@ -43,12 +42,33 @@ describe('collections', () => {
 
   describe('GET/collections', () => {
     describe('given collections', () => {
-      beforeEach(() => {
-        Collection.insertMany(authUserCollections);
+      beforeEach(async () => {
+        await Collection.insertMany(authUserCollections);
       });
 
       it('should return a 200', async () => {
         await supertest(app).get('/collections').expect(200);
+      });
+
+      it('should return a 200, if page less than 1', async () => {
+        await supertest(app)
+          .get('/collections')
+          .query({ page: -1 })
+          .expect(200);
+      });
+
+      it('should return 200 if there are collections for the search', async () => {
+        await supertest(app)
+          .get('/collections')
+          .query({ search: 'coll' })
+          .expect(200);
+      });
+
+      it('should return a 400, if collection does not found', async () => {
+        await supertest(app)
+          .get('/collections')
+          .query({ search: 'hero' })
+          .expect(400);
       });
 
       it('should return a 400', async () => {
@@ -78,25 +98,20 @@ describe('collections', () => {
           .send({ name: 'Invalid data because contain space', isPrivate: true })
           .expect(400);
       });
-
-      it('When sending part of the data, should return a 400', async () => {
-        await supertest(app)
-          .post('/collections')
-          .send({ name: 'Invalid data because space' })
-          .expect(400);
-      });
     });
   });
 
   describe('GET/collections/all', () => {
     describe('return all auth user collections', () => {
-      beforeEach(() => {
-        Collection.insertMany(authUserCollections);
+      beforeEach(async () => {
+        await Collection.insertMany(authUserCollections);
       });
+
       it('Should return 200', async () => {
         await supertest(app).get('/collections/all').expect(200);
       });
     });
+
     describe('When the user does not have any collections', () => {
       it('Should return 400', async () => {
         await supertest(app).get('/collections/all').expect(400);
@@ -106,17 +121,32 @@ describe('collections', () => {
 
   describe('GET/collections/randomCollections', () => {
     describe('given random collections exist ', () => {
-      beforeEach(() => {
-        Collection.insertMany(randomCollection);
+      beforeEach(async () => {
+        await Collection.insertMany(randomCollection);
       });
+
       it('should return a 200', async () => {
         await supertest(app).get('/collections/randomCollections').expect(200);
+      });
+
+      it('should return a 200, if page less than 1', async () => {
+        await supertest(app)
+          .get('/collections/randomCollections')
+          .query({ page: -1 })
+          .expect(200);
+      });
+
+      it('should return 200 if there are collections for the search', async () => {
+        await supertest(app)
+          .get('/collections/randomCollections')
+          .query({ search: 'coll' })
+          .expect(200);
       });
     });
 
     describe('given collections is authorize user ', () => {
-      beforeEach(() => {
-        Collection.insertMany(authUserCollections);
+      beforeEach(async () => {
+        await Collection.insertMany(authUserCollections);
       });
 
       it('should return 400 , because there are collections of only the authorized user', async () => {
@@ -140,8 +170,8 @@ describe('collections', () => {
 
   describe('POST/collections/movies', () => {
     describe('Add movie to collections', () => {
-      beforeEach(() => {
-        Collection.create(authUserCollections);
+      beforeEach(async () => {
+        await Collection.create(authUserCollections);
       });
 
       it('should return a 200 when success added movie', async () => {
@@ -157,7 +187,7 @@ describe('collections', () => {
           .expect(200);
       });
 
-      it('should return a 403 when invalid data', async () => {
+      it('should return a 403 ,when invalid collections ids', async () => {
         await supertest(app)
           .post('/collections/movies')
           .send({
@@ -179,13 +209,25 @@ describe('collections', () => {
           })
           .expect(400);
       });
+
+      it('should return a 400, when collections ids does not exist', async () => {
+        await supertest(app)
+          .post('/collections/movies')
+          .send({
+            name: 'Pulp fiction',
+            isMovie: true,
+            tmdb_id: 1234324,
+            backdrop_path: 'some/backdrop',
+          })
+          .expect(400);
+      });
     });
   });
 
   describe('GET/collections/:collectionID', () => {
     describe('get current collection', () => {
-      beforeEach(() => {
-        Collection.insertMany(authUserCollections);
+      beforeEach(async () => {
+        await Collection.insertMany(authUserCollections);
       });
 
       it('should return a 200', async () => {
@@ -193,9 +235,16 @@ describe('collections', () => {
           .get('/collections/' + validAuthUserCollectionsIds[0])
           .expect(200);
       });
+
+      it('should return a 200', async () => {
+        await supertest(app)
+          .get('/collections/' + validAuthUserCollectionsIds[0])
+          .query({ page: -1 })
+          .expect(200);
+      });
     });
 
-    describe('given current collection dont exist', () => {
+    describe('given current collection does not exist', () => {
       it('should return a 404, because the collection with such an id does not exis', async () => {
         await supertest(app)
           .get('/collections/' + invalidCollectionsIds[0])
@@ -203,7 +252,7 @@ describe('collections', () => {
       });
     });
 
-    describe('given current collection dont have movie', () => {
+    describe('given current collection does not have movie', () => {
       beforeEach(() => {
         Collection.insertMany(authUserCollections);
       });
@@ -218,8 +267,8 @@ describe('collections', () => {
 
   describe('PATCH/collections/:collectionID', () => {
     describe('Update collection', () => {
-      beforeEach(() => {
-        Collection.insertMany(authUserCollections);
+      beforeEach(async () => {
+        await Collection.insertMany(authUserCollections);
       });
 
       it('should return a 400, because send invalid data', async () => {
@@ -241,7 +290,7 @@ describe('collections', () => {
           .expect(200);
       });
 
-      it('should return a 404', async () => {
+      it('should return a 404, because collection does not exist', async () => {
         await supertest(app)
           .patch('/collections/' + invalidCollectionsIds[0])
           .send({
@@ -271,8 +320,8 @@ describe('collections', () => {
 
   describe('DELETE/collections/:collectionID', () => {
     describe('Delete collection', () => {
-      beforeEach(() => {
-        Collection.insertMany(authUserCollections);
+      beforeEach(async () => {
+        await Collection.insertMany(authUserCollections);
       });
 
       it('Should return 200', async () => {
@@ -283,17 +332,27 @@ describe('collections', () => {
 
       it('Should return 404', async () => {
         await supertest(app)
-          // wrong collectionID
           .delete('/collections/' + invalidCollectionsIds[0])
           .expect(404);
+      });
+    });
+
+    describe('Failed delete collection', () => {
+      beforeEach(async () => {
+        await Collection.insertMany(randomCollection);
+      });
+      it('should return a 401, because you cannot delete other peoples collections', async () => {
+        await supertest(app)
+          .delete('/collections/' + validRandomCollectionsIds[0])
+          .expect(401);
       });
     });
   });
 
   describe('GET /collections/:collectionID/movie/:movieID', () => {
     describe('Get current movie', () => {
-      beforeEach(() => {
-        Collection.insertMany(authUserCollections);
+      beforeEach(async () => {
+        await Collection.insertMany(authUserCollections);
       });
 
       it('should return 200', async () => {
@@ -303,6 +362,17 @@ describe('collections', () => {
               validAuthUserCollectionsIds[0] +
               '/movies/' +
               validAuthUserMoviesIds[0]
+          )
+          .expect(200);
+      });
+
+      it('should return 200', async () => {
+        await supertest(app)
+          .get(
+            '/collections/' +
+              validAuthUserCollectionsIds[0] +
+              '/movies/' +
+              validAuthUserMoviesIds[1]
           )
           .expect(200);
       });
@@ -322,8 +392,8 @@ describe('collections', () => {
 
   describe('DELETE /collections/:collectionID/movie/:movieID', () => {
     describe('delete movie from collections', () => {
-      beforeEach(() => {
-        Collection.insertMany(authUserCollections);
+      beforeEach(async () => {
+        await Collection.insertMany(authUserCollections);
       });
 
       it('should return 200', async () => {

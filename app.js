@@ -2,7 +2,7 @@ import setupServer from './src/utils/setupServer.js';
 
 import connectDB from './config/dbConfig.js';
 import mongoose from 'mongoose';
-
+import { genPasswordHash } from './src/lib/untils.js';
 const PORT = process.env.PORT;
 //-----------------MONGOOSE CONNECT----------
 

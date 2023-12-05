@@ -31,10 +31,6 @@ const getCurrentUserCollections = expressAsyncHandler(
     const totalCollections = await Collection.find(filters).countDocuments();
     const totalCountPage = Math.ceil(totalCollections / pageSize);
 
-    if (page > totalCountPage) {
-      return res.status(404).json({ message: 'This page does not exist' });
-    }
-
     res.status(200).json({
       collections,
       totalCountPage,
@@ -62,17 +58,12 @@ const getRandomCollections = expressAsyncHandler(async (req, res, next) => {
     .skip((page - 1) * pageSize)
     .limit(pageSize);
 
-  console.log(collections);
   if (collections.length < 1) {
     return res.status(400).json({ message: 'Collection not found' });
   }
 
   const totalCollections = await Collection.find(filters).countDocuments();
   const totalCountPage = Math.ceil(totalCollections / pageSize);
-
-  if (page > totalCountPage) {
-    return res.status(404).json({ message: 'This page does not exist' });
-  }
 
   res.status(200).json({
     collections,
@@ -126,11 +117,6 @@ const createNewCollection = [
 
     // save
     const savedCollection = await newCollection.save();
-
-    if (!savedCollection) {
-      return res.status(400).json({ message: 'Failed to create' });
-    }
-
     res.status(200).json(savedCollection);
   }),
 ];
@@ -250,8 +236,10 @@ const deleteCollection = expressAsyncHandler(async (req, res, next) => {
 
   const ownerCollection = collection.userID;
 
-  if (!String(ownerCollection) === String(authorizeUserID)) {
-    return res.status(401).json("You cannot delete other people's collections");
+  if (!ownerCollection.equals(authorizeUserID)) {
+    return res
+      .status(401)
+      .json({ message: "You cannot delete other people's collections" });
   }
 
   // delete collection

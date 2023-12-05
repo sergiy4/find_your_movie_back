@@ -3,6 +3,7 @@ import User from '../models/User.js';
 import expressAsyncHandler from 'express-async-handler';
 import { body, validationResult } from 'express-validator';
 import jsonwebtoken from 'jsonwebtoken';
+// import
 //
 const register = [
   // validation username
@@ -31,17 +32,17 @@ const register = [
         .join(' . ');
 
       console.log(errorStr);
-      res.status(400).json({ message: `${errorStr}` });
-      return;
+      return res.status(400).json({ message: `${errorStr}` });
     }
+
+    const { username, password } = req.body;
     // If there are no errors, we save the user and send it to the client
     const checkDuplicate = await User.findOne({
-      username: req.body.username,
+      username,
     }).exec();
 
     if (checkDuplicate) {
-      res.status(400).json({ message: 'This username already exist' });
-      return;
+      return res.status(400).json({ message: 'This username already exist' });
     }
 
     // create hash
@@ -49,7 +50,7 @@ const register = [
 
     // create user
     const user = new User({
-      username: req.body.username,
+      username,
       hash,
     });
 
@@ -75,33 +76,31 @@ const login = [
     ),
 
   expressAsyncHandler(async (req, res, next) => {
-    console.log(req.body);
     // get errors
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
       // if there are errors, I send them to the client
 
-      res.status(400).json({ message: `${errors.array()[0].msg}` });
-      return;
+      return res.status(400).json({ message: `${errors.array()[0].msg}` });
     }
 
-    const user = await User.findOne({ username: req.body.username }).exec();
+    const { username, password } = req.body;
+
+    const user = await User.findOne({ username }).exec();
     if (!user) {
-      res.status(401).json({
+      return res.status(404).json({
         success: false,
         message: 'could not find user',
       });
-      return;
     }
 
-    const isValid = await validPassword(req.body.password, user.hash);
+    const isValid = await validPassword(password, user.hash);
     if (!isValid) {
-      res.status(401).json({
+      return res.status(401).json({
         success: false,
         message: 'invalid password',
       });
-      return;
     }
 
     const accessToken = jsonwebtoken.sign(
@@ -128,20 +127,17 @@ const login = [
       sameSite: 'none',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-    res.json({ accessToken });
+    res.status(200).json({ accessToken });
   }),
 ];
 
 const refresh = expressAsyncHandler(async (req, res, next) => {
   const cookies = req.cookies;
-  console.log('sdf');
-  console.log(cookies);
-  console.log('sdf');
 
   if (!cookies?.fym_jwt) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
-  console.log(cookies);
+
   const refreshToken = cookies.fym_jwt;
 
   jsonwebtoken.verify(
@@ -169,7 +165,7 @@ const refresh = expressAsyncHandler(async (req, res, next) => {
         { expiresIn: '15m' }
       );
 
-      res.json({ accessToken });
+      res.status(200).json({ accessToken });
     }
   );
 });
